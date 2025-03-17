@@ -1,71 +1,57 @@
-import { createDep, Dep } from "./dep"
+import { createDep } from "./dep"
+import { reactiveMap } from "./reactive"
 
-type KeyToDepMap = Map<any, Dep>
-const targetMap = new WeakMap<any, KeyToDepMap>()
+let activeEffect: any = null
 
-export function effect<T = any>(fn: () => T) {
+let targetMap = new WeakMap()
+
+export function effect(fn) {
     const _effect = new ReactiveEffect(fn)
 
-    // 完成第一次fn函数的执行
     _effect.run()
 }
 
-export let activeEffect: ReactiveEffect | undefined
-
-export class ReactiveEffect<T = any> {
-    constructor(public fn: () => T) { }
-
+export class ReactiveEffect {
+    constructor(public fn) { }
     run() {
         activeEffect = this
-        this.fn()
+        return this.fn()
     }
 }
 
-// 收集依赖
-export function track(target: object, key: unknown) {
+export function track(target, key) {
     if (!activeEffect) return
     let depsMap = targetMap.get(target)
     if (!depsMap) {
         targetMap.set(target, (depsMap = new Map()))
     }
-    // depsMap.set(key, activeEffect)
+
     let dep = depsMap.get(key)
     if (!dep) {
         depsMap.set(key, (dep = createDep()))
     }
-    trackEffects(dep)
+
+    tarckEffects(dep)
 }
 
-// 利用dep依次跟踪指定key的所有effect
-export function trackEffects(dep: Dep) {
+function tarckEffects(dep) {
     dep.add(activeEffect!)
 }
 
-// 触发依赖
-export function trigger(target: object, key: unknown, newValue: unknown) {
-    const depsMap = targetMap.get(target)
+
+export function trigger(target, key, value) {
+    let depsMap = targetMap.get(target)
     if (!depsMap) {
         return
     }
-
-    // const effect = depsMap.get(key)
-
-    // if (!effect) {
-    //     return
-    // }
-
-    // effect.fn()
-
-    const dep: Dep | undefined = depsMap.get(key)
-
+    const dep = depsMap.get(key)
     if (!dep) {
         return
     }
-
     triggerEffects(dep)
 }
 
-export function triggerEffects(dep: Dep) {
+function triggerEffects(dep) {
     const effects = Array.isArray(dep) ? dep : [...dep]
 
     for (const effect of effects) {
@@ -73,6 +59,6 @@ export function triggerEffects(dep: Dep) {
     }
 }
 
-export function triggerEffect(effect: ReactiveEffect) {
+function triggerEffect(effect) {
     effect.run()
 }

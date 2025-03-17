@@ -9,7 +9,10 @@
 </head>
 
 <body>
-    <div id="app"></div>
+    <div id="app">
+        <div id="p1"></div>
+        <div id="p2"></div>
+    </div>
 </body>
 
 <script>
@@ -20,8 +23,16 @@
     })
 
     effect(() => {
-        document.querySelector('#app').innerText = obj.name
+        document.querySelector('#p1').innerText = obj.name
     })
+
+    effect(() => {
+        document.querySelector('#p2').innerText = obj.name
+    })
+
+    setTimeout(() => {
+        obj.name = '李四'
+    }, 2000);
 </script>
 
 </html>

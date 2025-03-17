@@ -60,24 +60,22 @@ var Vue = (function (exports) {
         return dep;
     };
 
+    var activeEffect = null;
     var targetMap = new WeakMap();
     function effect(fn) {
         var _effect = new ReactiveEffect(fn);
-        // 完成第一次fn函数的执行
         _effect.run();
     }
-    var activeEffect;
     var ReactiveEffect = /** @class */ (function () {
         function ReactiveEffect(fn) {
             this.fn = fn;
         }
         ReactiveEffect.prototype.run = function () {
             activeEffect = this;
-            this.fn();
+            return this.fn();
         };
         return ReactiveEffect;
     }());
-    // 收集依赖
     function track(target, key) {
         if (!activeEffect)
             return;
@@ -85,28 +83,20 @@ var Vue = (function (exports) {
         if (!depsMap) {
             targetMap.set(target, (depsMap = new Map()));
         }
-        // depsMap.set(key, activeEffect)
         var dep = depsMap.get(key);
         if (!dep) {
             depsMap.set(key, (dep = createDep()));
         }
-        trackEffects(dep);
+        tarckEffects(dep);
     }
-    // 利用dep依次跟踪指定key的所有effect
-    function trackEffects(dep) {
+    function tarckEffects(dep) {
         dep.add(activeEffect);
     }
-    // 触发依赖
-    function trigger(target, key, newValue) {
+    function trigger(target, key, value) {
         var depsMap = targetMap.get(target);
         if (!depsMap) {
             return;
         }
-        // const effect = depsMap.get(key)
-        // if (!effect) {
-        //     return
-        // }
-        // effect.fn()
         var dep = depsMap.get(key);
         if (!dep) {
             return;
@@ -152,19 +142,20 @@ var Vue = (function (exports) {
             return result;
         };
     }
-    var mutableHandler = {
+    var mutableHandlers = {
         get: get,
         set: set
     };
 
     var reactiveMap = new WeakMap();
     function reactive(target) {
-        return createReactiveObject(target, mutableHandler, reactiveMap);
+        return createReactiveObject(target, mutableHandlers, reactiveMap);
     }
     function createReactiveObject(target, baseHandlers, proxyMap) {
-        var existingProxy = proxyMap.get(target);
-        if (existingProxy) {
-            return existingProxy;
+        // 使用proxyMap，保存target和proxy的对应关系
+        var exsitingProxy = proxyMap.get(target);
+        if (exsitingProxy) {
+            return exsitingProxy;
         }
         var proxy = new Proxy(target, baseHandlers);
         proxyMap.set(target, proxy);
