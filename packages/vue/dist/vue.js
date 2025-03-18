@@ -2,6 +2,12 @@ var Vue = (function (exports) {
     'use strict';
 
     var isArray = Array.isArray;
+    var isObject = function (value) {
+        return value !== null && typeof value === 'object';
+    };
+    var hasChanged = function (newVal, val) {
+        return !Object.is(newVal, val);
+    };
 
     /******************************************************************************
     Copyright (c) Microsoft Corporation.
@@ -163,9 +169,54 @@ var Vue = (function (exports) {
         proxyMap.set(target, proxy);
         return proxy;
     }
+    var toReactive = function (value) {
+        return isObject(value) ? reactive(value) : value;
+    };
+
+    function ref(value) {
+        return createRef(value, false);
+    }
+    function isRef(r) {
+        return !!(r && r.__v_isRef === true);
+    }
+    function createRef(rawValue, shallow) {
+        if (isRef(rawValue)) {
+            return rawValue;
+        }
+        return new RefImpl(rawValue, shallow);
+    }
+    var RefImpl = /** @class */ (function () {
+        function RefImpl(value, __v_shallow) {
+            this.__v_shallow = __v_shallow;
+            this.dep = undefined;
+            this.__v_isRef = true;
+            this._rawValue = value;
+            this._value = __v_shallow ? value : toReactive(value);
+        }
+        Object.defineProperty(RefImpl.prototype, "value", {
+            get: function () {
+                trackRefValue(this);
+                return this._value;
+            },
+            set: function (newVal) {
+                if (hasChanged(newVal, this._rawValue)) {
+                    this._rawValue = newVal;
+                }
+            },
+            enumerable: false,
+            configurable: true
+        });
+        return RefImpl;
+    }());
+    function trackRefValue(ref) {
+        if (activeEffect) {
+            tarckEffects(ref.dep || (ref.dep = createDep()));
+        }
+    }
 
     exports.effect = effect;
     exports.reactive = reactive;
+    exports.ref = ref;
 
     Object.defineProperty(exports, '__esModule', { value: true });
 

@@ -1,6 +1,7 @@
 import { hasChanged } from "@vue/shared"
-import { trackRefValue, triggerRefValue } from "./effect"
+import { activeEffect, tarckEffects } from "./effect"
 import { toReactive } from "./reactive"
+import { createDep } from "./dep"
 
 export function ref(value) {
     return createRef(value, false)
@@ -20,13 +21,13 @@ function createRef(rawValue, shallow) {
 class RefImpl {
     private _value
     private _rawValue
-    private dep
+    private dep = undefined
 
     public readonly __v_isRef = true
 
-    constructor(value, public readonly _v_shallow) {
+    constructor(value, public readonly __v_shallow) {
         this._rawValue = value
-        this._value = _v_shallow ? value : toReactive(value)
+        this._value = __v_shallow ? value : toReactive(value)
     }
 
     get value() {
@@ -40,4 +41,14 @@ class RefImpl {
             triggerRefValue(this)
         }
     }
+}
+
+export function trackRefValue(ref) {
+    if (activeEffect) {
+        tarckEffects(ref.dep || (ref.dep = createDep()))
+    }
+}
+
+export function triggerRefValue(ref) {
+
 }

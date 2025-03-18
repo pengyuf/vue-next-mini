@@ -20,6 +20,6 @@ export function createReactiveObject(target, baseHandlers, proxyMap) {
     return proxy
 }
 
-export function toReactive(value) {
+export const toReactive = (value) => {
     return isObject(value) ? reactive(value) : value
 }

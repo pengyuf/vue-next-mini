@@ -2,7 +2,7 @@ import { isArray } from "@vue/shared"
 import { createDep } from "./dep"
 import { reactiveMap } from "./reactive"
 
-let activeEffect: any = null
+export let activeEffect: any = null
 
 let targetMap = new WeakMap()
 
@@ -35,7 +35,7 @@ export function track(target, key) {
     tarckEffects(dep)
 }
 
-function tarckEffects(dep) {
+export function tarckEffects(dep) {
     dep.add(activeEffect!)
 }
 
@@ -52,7 +52,7 @@ export function trigger(target, key, value) {
     triggerEffects(dep)
 }
 
-function triggerEffects(dep) {
+export function triggerEffects(dep) {
     const effects = isArray(dep) ? dep : [...dep]
 
     for (const effect of effects) {
@@ -64,15 +64,5 @@ function triggerEffect(effect) {
     effect.run()
 }
 
-export function trackRefValue(ref) {
-    if (!activeEffect) return
-    let dep = ref.dep
-    if (!dep) {
-        ref.dep = dep = createDep()
-    }
-    tarckEffects(dep)
-}
 
-export function triggerRefValue(ref) {
 
-}
