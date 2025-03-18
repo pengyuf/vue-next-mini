@@ -1,6 +1,8 @@
 var Vue = (function (exports) {
     'use strict';
 
+    var isArray = Array.isArray;
+
     /******************************************************************************
     Copyright (c) Microsoft Corporation.
 
@@ -105,7 +107,7 @@ var Vue = (function (exports) {
     }
     function triggerEffects(dep) {
         var e_1, _a;
-        var effects = Array.isArray(dep) ? dep : __spreadArray([], __read(dep), false);
+        var effects = isArray(dep) ? dep : __spreadArray([], __read(dep), false);
         try {
             for (var effects_1 = __values(effects), effects_1_1 = effects_1.next(); !effects_1_1.done; effects_1_1 = effects_1.next()) {
                 var effect_1 = effects_1_1.value;

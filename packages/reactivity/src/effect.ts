@@ -1,3 +1,4 @@
+import { isArray } from "@vue/shared"
 import { createDep } from "./dep"
 import { reactiveMap } from "./reactive"
 
@@ -52,7 +53,7 @@ export function trigger(target, key, value) {
 }
 
 function triggerEffects(dep) {
-    const effects = Array.isArray(dep) ? dep : [...dep]
+    const effects = isArray(dep) ? dep : [...dep]
 
     for (const effect of effects) {
         triggerEffect(effect)
@@ -61,4 +62,17 @@ function triggerEffects(dep) {
 
 function triggerEffect(effect) {
     effect.run()
+}
+
+export function trackRefValue(ref) {
+    if (!activeEffect) return
+    let dep = ref.dep
+    if (!dep) {
+        ref.dep = dep = createDep()
+    }
+    tarckEffects(dep)
+}
+
+export function triggerRefValue(ref) {
+
 }
