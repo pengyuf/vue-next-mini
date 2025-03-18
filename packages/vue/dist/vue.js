@@ -201,6 +201,8 @@ var Vue = (function (exports) {
             set: function (newVal) {
                 if (hasChanged(newVal, this._rawValue)) {
                     this._rawValue = newVal;
+                    this._value = toReactive(newVal);
+                    triggerRefValue(this);
                 }
             },
             enumerable: false,
@@ -211,6 +213,11 @@ var Vue = (function (exports) {
     function trackRefValue(ref) {
         if (activeEffect) {
             tarckEffects(ref.dep || (ref.dep = createDep()));
+        }
+    }
+    function triggerRefValue(ref) {
+        if (ref.dep) {
+            triggerEffects(ref.dep);
         }
     }
 

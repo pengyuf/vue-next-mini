@@ -1,5 +1,5 @@
 import { hasChanged } from "@vue/shared"
-import { activeEffect, tarckEffects } from "./effect"
+import { activeEffect, tarckEffects, triggerEffects } from "./effect"
 import { toReactive } from "./reactive"
 import { createDep } from "./dep"
 
@@ -38,6 +38,7 @@ class RefImpl {
     set value(newVal) {
         if (hasChanged(newVal, this._rawValue)) {
             this._rawValue = newVal
+            this._value = toReactive(newVal)
             triggerRefValue(this)
         }
     }
@@ -50,5 +51,7 @@ export function trackRefValue(ref) {
 }
 
 export function triggerRefValue(ref) {
-
+   if(ref.dep){
+      triggerEffects(ref.dep)
+   }
 }
