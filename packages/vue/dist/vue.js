@@ -5,6 +5,12 @@ var Vue = (function (exports) {
     var isObject = function (val) {
         return val !== null && typeof val === 'object';
     };
+    var isFunction = function (val) {
+        return typeof val === 'function';
+    };
+    var hasChanged = function (newVal, val) {
+        return !Object.is(newVal, val);
+    };
 
     /******************************************************************************
     Copyright (c) Microsoft Corporation.
@@ -73,12 +79,14 @@ var Vue = (function (exports) {
     }
     var activeEffect;
     var ReactiveEffect = /** @class */ (function () {
-        function ReactiveEffect(fn) {
+        function ReactiveEffect(fn, scheduler) {
+            if (scheduler === void 0) { scheduler = null; }
             this.fn = fn;
+            this.scheduler = scheduler;
         }
         ReactiveEffect.prototype.run = function () {
             activeEffect = this;
-            this.fn();
+            return this.fn();
         };
         return ReactiveEffect;
     }());
@@ -119,12 +127,14 @@ var Vue = (function (exports) {
         triggerEffects(dep);
     }
     function triggerEffects(dep) {
-        var e_1, _a;
+        var e_1, _a, e_2, _b;
         var effects = isArray(dep) ? dep : __spreadArray([], __read(dep), false);
         try {
             for (var effects_1 = __values(effects), effects_1_1 = effects_1.next(); !effects_1_1.done; effects_1_1 = effects_1.next()) {
                 var effect_1 = effects_1_1.value;
-                triggerEffect(effect_1);
+                if (effect_1.computed) {
+                    triggerEffect(effect_1);
+                }
             }
         }
         catch (e_1_1) { e_1 = { error: e_1_1 }; }
@@ -134,9 +144,29 @@ var Vue = (function (exports) {
             }
             finally { if (e_1) throw e_1.error; }
         }
+        try {
+            for (var effects_2 = __values(effects), effects_2_1 = effects_2.next(); !effects_2_1.done; effects_2_1 = effects_2.next()) {
+                var effect_2 = effects_2_1.value;
+                if (!effect_2.computed) {
+                    triggerEffect(effect_2);
+                }
+            }
+        }
+        catch (e_2_1) { e_2 = { error: e_2_1 }; }
+        finally {
+            try {
+                if (effects_2_1 && !effects_2_1.done && (_b = effects_2.return)) _b.call(effects_2);
+            }
+            finally { if (e_2) throw e_2.error; }
+        }
     }
     function triggerEffect(effect) {
-        effect.run();
+        if (effect.scheduler) {
+            effect.scheduler();
+        }
+        else {
+            effect.run();
+        }
     }
 
     var get = createGetter();
@@ -196,6 +226,7 @@ var Vue = (function (exports) {
             this.__v_isShallow = __v_isShallow;
             this.dep = undefined;
             this.__v_isRef = true;
+            this._rawValue = value;
             this._value = __v_isShallow ? value : toReactive(value);
         }
         Object.defineProperty(RefImpl.prototype, "value", {
@@ -204,6 +235,11 @@ var Vue = (function (exports) {
                 return this._value;
             },
             set: function (newVal) {
+                if (hasChanged(newVal, this._rawValue)) {
+                    this._rawValue = newVal;
+                    this._value = toReactive(newVal);
+                    triggerRefValue(this);
+                }
             },
             enumerable: false,
             configurable: true
@@ -215,7 +251,51 @@ var Vue = (function (exports) {
             trackEffects(ref.dep || (ref.dep = createDep()));
         }
     }
+    function triggerRefValue(ref) {
+        if (ref.dep) {
+            triggerEffects(ref.dep);
+        }
+    }
 
+    var ComputedRefImpl = /** @class */ (function () {
+        function ComputedRefImpl(getter) {
+            var _this = this;
+            this.dep = undefined;
+            this.__v_isRef = true;
+            this._dirty = true;
+            this.effect = new ReactiveEffect(getter, function () {
+                if (!_this._dirty) {
+                    _this._dirty = true;
+                    triggerRefValue(_this);
+                }
+            });
+            this.effect.computed = this;
+        }
+        Object.defineProperty(ComputedRefImpl.prototype, "value", {
+            get: function () {
+                trackRefValue(this);
+                if (this._dirty) {
+                    this._dirty = false;
+                    this._value = this.effect.run();
+                }
+                return this._value;
+            },
+            enumerable: false,
+            configurable: true
+        });
+        return ComputedRefImpl;
+    }());
+    function computed(getterOrOptions) {
+        var getter;
+        var onlyGetter = isFunction(getterOrOptions);
+        if (onlyGetter) {
+            getter = getterOrOptions;
+        }
+        var cRef = new ComputedRefImpl(getter);
+        return cRef;
+    }
+
+    exports.computed = computed;
     exports.effect = effect;
     exports.reactive = reactive;
     exports.ref = ref;
