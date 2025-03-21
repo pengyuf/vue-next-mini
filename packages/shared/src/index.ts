@@ -11,3 +11,5 @@ export const isFunction = (val: unknown): val is Function => {
 export const hasChanged = (newVal, val) => {
     return !Object.is(newVal, val)
 }
+
+export const isString = (val: unknown): val is string => typeof val === 'string'
