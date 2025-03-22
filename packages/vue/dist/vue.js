@@ -296,6 +296,9 @@ var Vue = (function (exports) {
         return cRef;
     }
 
+    var Text = Symbol('Text');
+    var Fragment = Symbol('Fragment');
+    var Comment = Symbol('comment');
     function isVNode(value) {
         return value ? value.__v_isVNode === true : false;
     }
@@ -355,6 +358,9 @@ var Vue = (function (exports) {
         }
     }
 
+    exports.Comment = Comment;
+    exports.Fragment = Fragment;
+    exports.Text = Text;
     exports.computed = computed;
     exports.effect = effect;
     exports.h = h;
