@@ -13,17 +13,12 @@
 </body>
 
 <script>
-    const { ref, effect } = Vue
+    const { h } = Vue
+    const vnode = h('div', {
+        clase: 'test'
+    }, 'hello render')
 
-    const obj = ref('张三')
-
-    effect(() => {
-        document.querySelector('#app').innerText = obj.value
-    })
-
-    setTimeout(() => {
-        obj.value = '李四'
-    }, 2000);
+    console.log(vnode)
 </script>
 
 </html>

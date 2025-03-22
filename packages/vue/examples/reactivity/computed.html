@@ -13,16 +13,22 @@
 </body>
 
 <script>
-    const { ref, effect } = Vue
+    const { reactive, effect, computed } = Vue
 
-    const obj = ref('张三')
+    const obj = reactive({
+        name: '张三'
+    })
+
+    const computedObj = computed(() => {
+        return '姓名：' + obj.name
+    })
 
     effect(() => {
-        document.querySelector('#app').innerText = obj.value
+        document.querySelector('#app').innerText = computedObj.value
     })
 
     setTimeout(() => {
-        obj.value = '李四'
+        obj.name = '李四'
     }, 2000);
 </script>
 
