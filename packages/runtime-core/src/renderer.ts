@@ -13,6 +13,37 @@ export function createRenderer(options: RenderOptions) {
 }
 
 function baseCreateRenderer(options: RenderOptions): any {
+    const {
+        insert: hostInsert,
+        patchProp: hostPatchProp,
+        createElement: hostCreateElement,
+        setElementText: hostSetElementText
+    } = options
+
+    const processElement = (oldVNode, newVNode, container, anchor) => {
+        if (oldVNode == null) {
+            mountElement(newVNode, container, anchor)
+        } else {
+
+        }
+    }
+
+    const mountElement = (vnode, container, anchor) => {
+        const { type, props, shapeFlag } = vnode
+        const el = (vnode.el = hostCreateElement(type))
+        if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
+            hostSetElementText(el, vnode.children)
+        } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+
+        }
+        if (props) {
+            for (const key in props) {
+                hostPatchProp(el, key, null, props[key])
+            }
+        }
+        hostInsert(el, container, anchor)
+    }
+
     const patch = (oldVNode, newVNode, container, anchor = null) => {
         if (oldVNode === newVNode) {
             return
@@ -32,7 +63,7 @@ function baseCreateRenderer(options: RenderOptions): any {
                 break;
             default:
                 if (shapeFlag & ShapeFlags.ELEMENT) {
-
+                    processElement(oldVNode, newVNode, container, anchor)
                 } else if (shapeFlag & ShapeFlags.COMPONENT) {
 
                 }
