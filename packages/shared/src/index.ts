@@ -13,3 +13,5 @@ export const hasChanged = (newVal, val) => {
 }
 
 export const isString = (val: unknown): val is string => typeof val === 'string'
+
+export const extend = Object.assign
