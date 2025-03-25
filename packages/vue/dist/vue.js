@@ -15,6 +15,7 @@ var Vue = (function (exports) {
     var onRE = /^on[^a-z]/;
     var isOn = function (key) { return onRE.test(key); };
     var extend = Object.assign;
+    var EMPTY_OBJ = Object.freeze({});
 
     /******************************************************************************
     Copyright (c) Microsoft Corporation.
@@ -397,7 +398,12 @@ var Vue = (function (exports) {
         var hostInsert = options.insert, hostPatchProp = options.patchProp, hostCreateElement = options.createElement, hostSetElementText = options.setElementText;
         var processElement = function (oldVNode, newVNode, container, anchor) {
             if (oldVNode == null) {
+                // 挂载节点
                 mountElement(newVNode, container, anchor);
+            }
+            else {
+                // 更新节点
+                patchElement(oldVNode, newVNode);
             }
         };
         var mountElement = function (vnode, container, anchor) {
@@ -412,6 +418,52 @@ var Vue = (function (exports) {
                 }
             }
             hostInsert(el, container, anchor);
+        };
+        var patchElement = function (oldVNode, newVNode) {
+            var el = (newVNode.el = oldVNode.el);
+            var oldProps = oldVNode.props || EMPTY_OBJ;
+            var newProps = newVNode.props || EMPTY_OBJ;
+            patchChildren(oldVNode, newVNode, el);
+            patchProps(el, newVNode, oldProps, newProps);
+        };
+        var patchChildren = function (oldVNode, newVNode, container, anchor) {
+            var c1 = oldVNode && oldVNode.children;
+            var prevShapeFlag = oldVNode ? oldVNode.shapeFlag : 0;
+            var c2 = newVNode && newVNode.children;
+            var shapeFlag = newVNode.shapeFlag;
+            if (shapeFlag & 8 /* ShapeFlags.TEXT_CHILDREN */) {
+                if (c2 !== c1) {
+                    // 挂载新子节点的文本
+                    hostSetElementText(container, c2);
+                }
+            }
+            else {
+                if (prevShapeFlag & 16 /* ShapeFlags.ARRAY_CHILDREN */) ;
+                else {
+                    if (prevShapeFlag & 8 /* ShapeFlags.TEXT_CHILDREN */) {
+                        // 删除旧节点的text
+                        hostSetElementText(container, '');
+                    }
+                }
+            }
+        };
+        var patchProps = function (el, vnode, oldProps, newProps) {
+            if (oldProps !== newProps) {
+                for (var key in newProps) {
+                    var next = newProps[key];
+                    var prev = oldProps[key];
+                    if (next !== prev) {
+                        hostPatchProp(el, key, prev, next);
+                    }
+                }
+                if (oldProps !== EMPTY_OBJ) {
+                    for (var key in oldProps) {
+                        if (!(key in newProps)) {
+                            hostPatchProp(el, key, oldProps[key], null);
+                        }
+                    }
+                }
+            }
         };
         var patch = function (oldVNode, newVNode, container, anchor) {
             if (anchor === void 0) { anchor = null; }
