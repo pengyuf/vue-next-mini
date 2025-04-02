@@ -15,8 +15,8 @@ export interface ReactiveEffectOptions {
 export function effect<T = any>(fn: () => T, options?: ReactiveEffectOptions) {
     const _effect = new ReactiveEffect(fn)
 
-    if(options){
-        extend(_effect,options)
+    if (options) {
+        extend(_effect, options)
     }
 
     // 完成第一次fn函数的执行
@@ -35,6 +35,10 @@ export class ReactiveEffect<T = any> {
     run() {
         activeEffect = this
         return this.fn()
+    }
+
+    stop() {
+
     }
 }
 
